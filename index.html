@@ -147,10 +147,7 @@
 
 <script>
 (function(){
-  var GIST_ID = "8e2ebb63edd1d09eea14b1bac0d3330b";
-  var RAW_URL = "https://gist.githubusercontent.com/Ansonh436/" + GIST_ID + "/raw/leaderboard.json";
-  var API_URL = "https://api.github.com/gists/" + GIST_ID;
-  var TOKEN = atob("Z2hwXzdsWEZMRWxaR1ozNlFLMVkydnlZeGcxRVZKZThXWDNZYVQ3Mg==");
+  var FB_URL = "https://poop-tracker-d16f4-default-rtdb.firebaseio.com/leaderboard.json";
 
   var myName = localStorage.getItem('poop_name') || '';
   var state = { users: {} };
@@ -189,12 +186,12 @@
 
   function setSync(status, text){
     var bar = document.getElementById('syncBar');
-    bar.className = status; // '', 'ok', 'err'
+    bar.className = status;
     document.getElementById('syncText').textContent = text;
   }
 
   async function readState(){
-    var r = await fetch(RAW_URL + '?ts=' + Date.now(), { cache: 'no-store' });
+    var r = await fetch(FB_URL, { cache: 'no-store' });
     var txt = await r.text();
     var data = JSON.parse(txt);
     if(!data || typeof data.users !== 'object') data = { users: {} };
@@ -202,11 +199,10 @@
   }
 
   async function writeState(s){
-    var body = JSON.stringify({ files: { "leaderboard.json": { content: JSON.stringify(s) } } });
-    var r = await fetch(API_URL, {
-      method: 'PATCH',
-      headers: { 'Authorization': 'token ' + TOKEN, 'Content-Type': 'application/json' },
-      body: body
+    var r = await fetch(FB_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(s)
     });
     if(!r.ok) throw new Error('HTTP ' + r.status);
   }
@@ -246,7 +242,6 @@
     return s.users[myName];
   }
 
-  // ---- name ----
   function startWithName(){
     var v = document.getElementById('nameInput').value.trim();
     if(!v){ document.getElementById('nameInput').focus(); return; }
@@ -261,7 +256,6 @@
     document.getElementById('whoName').textContent = myName;
   }
 
-  // ---- render ----
   function render(){
     var t = todayKey();
     var me = state.users[myName];
@@ -277,7 +271,6 @@
     var wd=['日','一','二','三','四','五','六'][d.getDay()];
     document.getElementById('dateStr').textContent = (d.getMonth()+1)+'月'+d.getDate()+'日 星期'+wd;
 
-    // leaderboard
     var rows = Object.keys(state.users).map(function(name){
       var u = state.users[name];
       return { name:name, today:get(u.logs,t), total:total(u.logs), streak:calcStreak(u.logs) };
@@ -311,7 +304,6 @@
     clearTimeout(t._h); t._h=setTimeout(function(){ t.classList.remove('show'); },1600);
   }
 
-  // ---- events ----
   document.getElementById('nameGo').addEventListener('click', startWithName);
   document.getElementById('nameInput').addEventListener('keydown', function(e){ if(e.key==='Enter') startWithName(); });
   document.getElementById('poopBtn').addEventListener('click', function(){
@@ -338,7 +330,6 @@
     document.body.removeChild(ta);
   }
 
-  // ---- start ----
   if(myName){ showMain(); refresh(); }
   else { document.getElementById('nameInput').focus(); }
 
