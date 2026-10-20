@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>💩 廁所龍虎榜</title>
+<style>
+  :root{
+    --bg:#1c1410; --card:#2a1f18; --accent:#c98a4b; --accent2:#e8b26b;
+    --text:#f4ead9; --muted:#9c8b78; --danger:#e06c5a; --ok:#7fbf7f;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang HK","Microsoft JhengHei",sans-serif;
+    background:radial-gradient(120% 90% at 50% 0%, #2b1d14 0%, var(--bg) 60%);
+    color:var(--text); min-height:100vh; padding:18px 16px 40px;
+  }
+  .wrap{max-width:440px; margin:0 auto;}
+
+  /* 名字輸入 */
+  #nameScreen{text-align:center; padding-top:18vh;}
+  #nameScreen h1{font-size:34px; margin:0 0 6px;}
+  #nameScreen p{color:var(--muted); margin:0 0 22px;}
+  #nameInput{
+    width:100%; padding:16px; font-size:18px; text-align:center;
+    background:var(--card); color:var(--text); border:2px solid var(--accent);
+    border-radius:14px; outline:none;
+  }
+  #nameGo{
+    margin-top:14px; width:100%; padding:16px; font-size:18px; font-weight:700;
+    background:var(--accent); color:#241708; border:none; border-radius:14px; cursor:pointer;
+  }
+
+  /* 主畫面 */
+  #main{display:none;}
+  .top{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;}
+  .who{font-size:20px; font-weight:800;}
+  .who small{display:block; color:var(--muted); font-weight:400; font-size:12px;}
+  .date{color:var(--muted); font-size:13px; text-align:right;}
+
+  .bigcard{
+    background:var(--card); border-radius:22px; padding:26px 20px 22px; text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.35); margin-bottom:16px;
+  }
+  .todayLabel{color:var(--muted); font-size:14px; letter-spacing:1px;}
+  .count{font-size:110px; font-weight:900; line-height:1; margin:8px 0 4px;
+    background:linear-gradient(180deg,#fff,var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .verdict{font-size:15px; color:var(--muted); min-height:22px;}
+
+  .btn{
+    display:block; width:100%; padding:22px; font-size:22px; font-weight:800;
+    border:none; border-radius:18px; cursor:pointer; transition:transform .06s;
+    background:linear-gradient(180deg,#e0a45c,#c47f3d); color:#2a1a08;
+    box-shadow:0 8px 0 #8a5a28, 0 14px 24px rgba(0,0,0,.3);
+  }
+  .btn:active{transform:translateY(5px); box-shadow:0 3px 0 #8a5a28;}
+  .subrow{display:flex; gap:10px; margin-top:12px;}
+  .sub{
+    flex:1; padding:14px; font-size:15px; font-weight:700; border:none; border-radius:12px;
+    cursor:pointer; background:var(--card); color:var(--text); border:1px solid #4a3827;
+  }
+  .sub.danger{color:var(--danger);}
+
+  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:16px;}
+  .stat{background:var(--card); border-radius:16px; padding:16px 8px; text-align:center;}
+  .stat .n{font-size:26px; font-weight:900;}
+  .stat .l{font-size:12px; color:var(--muted); margin-top:3px;}
+
+  .share{
+    margin-top:16px; width:100%; padding:15px; font-size:16px; font-weight:700;
+    background:#3d5a3d; color:#d7f0d7; border:none; border-radius:14px; cursor:pointer;
+  }
+  .hint{margin-top:18px; color:var(--muted); font-size:12px; line-height:1.6; text-align:center;}
+  #toast{
+    position:fixed; left:50%; bottom:30px; transform:translateX(-50%);
+    background:#000; color:#fff; padding:10px 18px; border-radius:10px; font-size:14px;
+    opacity:0; transition:opacity .3s; pointer-events:none;
+  }
+  #toast.show{opacity:.95;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="nameScreen">
+    <h1>💩</h1>
+    <p>你叫咩名？</p>
+    <input id="nameInput" maxlength="12" placeholder="例如：阿橋" autocomplete="off">
+    <button id="nameGo">開始計屎 ✅</button>
+  </div>
+
+  <div id="main">
+    <div class="top">
+      <div class="who"><span id="whoName"></span><small>本機戰士</small></div>
+      <div class="date" id="dateStr"></div>
+    </div>
+
+    <div class="bigcard">
+      <div class="todayLabel">今日痾咗</div>
+      <div class="count" id="todayCount">0</div>
+      <div class="verdict" id="verdict">今日未開齋 🥲</div>
+    </div>
+
+    <button class="btn" id="poopBtn">💩 +1 痾咗一次</button>
+    <div class="subrow">
+      <button class="sub" id="undoBtn">↩️ 手殘減一</button>
+      <button class="sub danger" id="resetBtn">🗑 今日清零</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="n" id="weekCount">0</div><div class="l">近7日</div></div>
+      <div class="stat"><div class="n" id="streak">0</div><div class="l">連續日數</div></div>
+      <div class="stat"><div class="n" id="totalCount">0</div><div class="l">總計</div></div>
+    </div>
+
+    <button class="share" id="shareBtn">📣 分享今日戰績俾朋友</button>
+
+    <div class="hint" id="hint">
+      資料只存喺你部機（唔上傳）。<br>
+      想同朋友同步比高低，要加個雲端後台 —— 叫 bot 整。
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  var KEY = 'poopTracker_v1';
+  var state = load();
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return { name:'', logs:{} };
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  }
+  function todayKey(d){
+    d = d || new Date();
+    var y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+    return y+'-'+m+'-'+day;
+  }
+  function get(k){ return state.logs[k] || 0; }
+  function set(k,v){ state.logs[k]=v; if(v<=0) delete state.logs[k]; save(); }
+
+  function calcStreak(){
+    var s=0, d=new Date();
+    for(var i=0;i<3650;i++){
+      if(get(todayKey(d))>0){ s++; d.setDate(d.getDate()-1); }
+      else break;
+    }
+    return s;
+  }
+  function last7(){
+    var sum=0, d=new Date();
+    for(var i=0;i<7;i++){ sum += get(todayKey(d)); d.setDate(d.getDate()-1); }
+    return sum;
+  }
+  function total(){
+    var t=0; for(var k in state.logs) t += state.logs[k]; return t;
+  }
+  function verdict(n){
+    if(n===0) return '今日未開齋 🥲';
+    if(n===1) return '正常排泄 ✅';
+    if(n===2) return '身體暢通 👍';
+    if(n===3) return '腸胃好活躍 🚀';
+    if(n>=4 && n<=6) return '瀨嘢級別，注意保重 🤯';
+    return '呢個係…史詩級輸出 🏆';
+  }
+
+  // ---- 名字 ----
+  function showMain(){
+    document.getElementById('nameScreen').style.display='none';
+    document.getElementById('main').style.display='block';
+    document.getElementById('whoName').textContent = state.name || '無名屎王';
+  }
+  function startWithName(){
+    var v = document.getElementById('nameInput').value.trim();
+    if(!v){ document.getElementById('nameInput').focus(); return; }
+    state.name = v; save(); showMain();
+  }
+  document.getElementById('nameGo').addEventListener('click', startWithName);
+  document.getElementById('nameInput').addEventListener('keydown', function(e){ if(e.key==='Enter') startWithName(); });
+
+  // ---- 渲染 ----
+  function render(){
+    var k = todayKey();
+    var n = get(k);
+    document.getElementById('todayCount').textContent = n;
+    document.getElementById('verdict').textContent = verdict(n);
+    document.getElementById('weekCount').textContent = last7();
+    document.getElementById('streak').textContent = calcStreak();
+    document.getElementById('totalCount').textContent = total();
+    var d=new Date();
+    var wd=['日','一','二','三','四','五','六'][d.getDay()];
+    document.getElementById('dateStr').textContent = (d.getMonth()+1)+'月'+d.getDate()+'日 星期'+wd;
+  }
+
+  function toast(msg){
+    var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+    clearTimeout(t._h); t._h=setTimeout(function(){ t.classList.remove('show'); },1500);
+  }
+
+  document.getElementById('poopBtn').addEventListener('click', function(){
+    var k=todayKey(); set(k, get(k)+1); render();
+  });
+  document.getElementById('undoBtn').addEventListener('click', function(){
+    var k=todayKey(); if(get(k)>0){ set(k, get(k)-1); render(); } else toast('已經 0 次，冇得再減 😂');
+  });
+  document.getElementById('resetBtn').addEventListener('click', function(){
+    if(confirm('確定將今日歸零？')){ set(todayKey(),0); render(); }
+  });
+  document.getElementById('shareBtn').addEventListener('click', function(){
+    var n=get(todayKey());
+    var txt='💩 廁所日報\n我叫 '+state.name+'，今日痾咗 '+n+' 次！\n連續 '+calcStreak()+' 日有貨 🚽';
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){ toast('已複製，貼去 group 啦 📋'); }, function(){ fallbackCopy(txt); });
+    } else fallbackCopy(txt);
+  });
+  function fallbackCopy(txt){
+    var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); toast('已複製 📋'); }catch(e){ toast(txt); }
+    document.body.removeChild(ta);
+  }
+
+  // ---- 啟動 ----
+  if(state.name){ showMain(); render(); }
+  else { document.getElementById('nameInput').focus(); }
+})();
+</script>
+</body>
+</html>
